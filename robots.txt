@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://dough-net.github.io/sitemap.xml

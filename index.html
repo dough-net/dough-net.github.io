@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+  <!-- Head -->
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <!-- Metadata, OpenGraph and Schema.org -->
+
+
+
+
+<!-- Standard metadata -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>
+  
+  
+    A Visual Predictive Model for Topological Manipulation of Deformable Objects
+  
+</title>
+<meta name="author" content="Dominik Bauer">
+<meta name="description" content="A Visual Predictive Model for Topological Manipulation of Deformable Objects">
+
+
+
+<!-- Bootstrap & MDB -->
+<link rel="stylesheet" href="/assets/css/bootstrap.min.css?86a6fa0c1cad24e6c03d1f97289cf760">
+<!-- <link rel="stylesheet" href="/assets/css/mdb.min.css?62a43d1430ddb46fc4886f9d0e3b49b8"> -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/css/mdb.min.css" integrity="sha256-jpjYvU3G3N6nrrBwXJoVEYI/0zw8htfFnhT9ljN3JJw=" crossorigin="anonymous">
+
+<!-- Bootstrap Table -->
+
+
+<!-- Fonts & Icons -->
+<link defer rel="stylesheet" href="/assets/css/academicons.min.css?f0b7046b84e425c55f3463ac249818f5">
+<link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap">
+
+<!-- Code Syntax Highlighting -->
+<link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light">
+
+
+  <!-- Sidebar Table of Contents -->
+  <link defer href="/assets/css/bootstrap-toc.min.css?6f5af0bb9aab25d79b2448143cbeaa88" rel="stylesheet">
+
+
+<!-- Styles -->
+
+  <link rel="shortcut icon" href="data:image/svg+xml,&lt;svg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20100%20100%22&gt;&lt;text%20y=%22.9em%22%20font-size=%2290%22&gt;%F0%9F%8D%A9&lt;/text&gt;&lt;/svg&gt;">
+
+<link rel="stylesheet" href="/assets/css/main.css?d41d8cd98f00b204e9800998ecf8427e">
+<link rel="canonical" href="https://dough-net.github.io/">
+
+<!-- Dark Mode -->
+<script src="/assets/js/theme.js?a5ca4084d3b81624bcfa01156dae2b8e"></script>
+
+  <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark">
+  <script>
+    initTheme();
+  </script>
+
+
+<!-- GeoJSON support via Leaflet -->
+
+
+<!-- diff2html -->
+
+
+
+  <!-- Image comparison slider -->
+  
+    <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/img-comparison-slider@8.0.6/dist/styles.min.css">
+  
+  <!-- Image slider -->
+  
+
+
+
+
+  </head>
+
+  <!-- Body -->
+  <body class="">
+
+    <!-- Content -->
+    <div class="container mt-5" role="main">
+      
+        
+          <div class="row">
+            <!-- main content area -->
+            <div class="col-sm-9">
+<div class="post">
+  <header class="post-header">
+    <h1 class="post-title">DoughNet 🍩</h1>
+    <p class="post-description">A Visual Predictive Model for Topological Manipulation of Deformable Objects</p>
+  </header>
+
+  <article>
+    <p style="text-align: center;">
+  <a href="https://dornik.github.io" rel="external nofollow noopener" target="_blank">Dominik Bauer</a> <sup>1</sup>, <a href="https://www.zhenjiaxu.com/" rel="external nofollow noopener" target="_blank">Zhenjia Xu</a> <sup>1,2</sup>, <a href="https://shurans.github.io/" rel="external nofollow noopener" target="_blank">Shuran Song</a> <sup>1,2</sup><br>
+  <small><i><sup>1</sup> Columbia University, <sup>2</sup> Stanford University</i></small>
+</p>
+
+<p><strong>tl;dr</strong> Our predictive model enables planning of robotic manipulation for geometrical deformation <em>and</em> topological change of elastoplastic objects; taking only a single RGBD observation as input, we select the best tool, its pose and opening width to recreate the desired robot- or human-made goal shape.</p>
+
+<p class="post-description" style="margin-bottom: 1.5rem;"><a href="/">Paper</a> · <a href="/">Code</a> · <a href="/">Dataset</a></p>
+
+<figure>
+  <video class="video-fluid rounded z-depth-1" width="auto" height="auto" controls="true" autoplay="true" muted="true" loop="true">
+    <source src="/assets/video/teaser.webm" type="video/webm; codecs=vp9,vorbis"></source>
+    <source src="/assets/video/teaser.mp4" type="video/mp4"></source>
+  </video>
+</figure>
+
+<hr style="margin-top: 3rem; margin-bottom: 3rem;">
+
+<h3 id="planning-topological-manipulation">Planning Topological Manipulation</h3>
+
+<p>Given a partial RGBD observation of (held-out) objects and a set of (held-out) tools that the robot may use, our approach selects (1) the best suited tool, (2) its in-plane pose, as well as (3) its final opening width to satisfy, both, the geometry and the topology of a given goal state.
+
+<p>Below, we provide the last frame in the left video as goal state and the first frame in the right video as initial state to our method. The left video shows the creation of the goal state; the right video shows the execution of our plan to achieve this goal state (from a <em>similar</em> initialization).</p>
+
+<figure>
+  
+    <video src="/assets/video/fig_1a.mp4" class="img-fluid rounded z-depth-1" width="auto" height="auto" autoplay="" loop="" muted=""></video>
+
+  
+  
+</figure>
+
+<div class="row mt-3">
+  <div class="col-sm mt-3 mt-md-0">
+    <div class="caption">
+        <strong>Robot-defined goal</strong>, splitting a doughnut shape by fully closing a narrow end-effector tool. This creates two smaller doughnut shapes; not a single figure-8 shape as validated by pulling the two components apart.
+    </div>
+  </div>
+  <div class="col-sm mt-3 mt-md-0">
+    <div class="caption">
+        <strong>Our planned topological manipulation</strong>, deforming and merging towards a figure-8-shape, then splitting it into two doughnut shapes. Our approach selects the same tool used to create the goal.
+    </div>
+  </div>
+</div>
+
+<figure>
+      <video src="/assets/video/fig_1c.mp4" class="img-fluid rounded z-depth-1" width="auto" height="auto" autoplay="" loop="" muted=""></video>
+</figure>
+
+<div class="row mt-3">
+  <div class="col-sm mt-3 mt-md-0">
+    <div class="caption">
+      <strong>Human-defined goal</strong>, pinching two roll shapes together with index finger and thumb. This creates a single X-shape; not just two deformed rolls. Note that the deformation is wider than the similar available tool.
+    </div>
+  </div>
+  <div class="col-sm mt-3 mt-md-0">
+    <div class="caption">
+      <strong>Our planned topological manipulation</strong>, merging two components to one, deforming them towards the desired X-shape while avoiding to erroneously split it by closing further. Our approach selects a square tool to achieve the effect of pinching fingers.
+    </div>
+  </div>
+</div>
+
+<figure>
+  
+    <video src="/assets/video/fig_1d.mp4" class="img-fluid rounded z-depth-1" width="auto" height="auto" autoplay="" loop="" muted=""></video>
+
+  
+  
+</figure>
+
+<div class="row mt-3">
+  <div class="col-sm mt-3 mt-md-0">
+    <div class="caption">
+      <strong>Human-defined goal</strong>, squeezing a doughnut shape together between both palms. This creates a single roll shape. Note the irregular (contact) surface of the goal as compared to the available flat-sided tools.
+    </div>
+  </div>
+  <div class="col-sm mt-3 mt-md-0">
+    <div class="caption">
+      <strong>Our planned topological manipulation</strong>, deforming the doughnut towards a roll such that it self-merges, closing the hole. The width of the roll matches the widest part of the irregular human-defined goal. Our approach selects a wide tool to achieve the effect of squeezing palms.
+    </div>
+  </div>
+</div>
+
+<hr style="margin-bottom: 3rem;">
+
+<h3 id="predicting-deformation-and-topological-change">Predicting Deformation and Topological Change</h3>
+
+<p>The topological manipulation shown above is enabled by our learned predictive model. It consists of two components: (1) a denoising autoencoder embeds and completes partial point-cloud observations in a topology-aware latent space; (2) an autoregressive set-to-set model, taking such a representation of the current object state and the desired motion of the tool to predict the next latent state.
+</p>
+
+<p>In the examples below, the top row shows color and depth observations of a real-world manipulation trajectory. The bottom row shows the partial point cloud we may extract from these observations; and the predictions of DoughNet, taking the partial observation in the left column as input and predicting subsequent completed states from its own previous output.
+Different colors indicate the assignment to different components. The graph in the lower-right corner is a visualization of the predicted topology.</p>
+
+<div class="row mt-3">
+  <div class="col-sm mt-3 mt-md-0">
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0030/04_rgb-480.webp 480w,/assets/results/gt/0030/04_rgb-800.webp 800w,/assets/results/gt/0030/04_rgb-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0030/04_rgb.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Color</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0030/04_depth-480.webp 480w,/assets/results/gt/0030/04_depth-800.webp 800w,/assets/results/gt/0030/04_depth-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0030/04_depth.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Depth</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0030/04_pcd-roi-480.webp 480w,/assets/results/gt/0030/04_pcd-roi-800.webp 800w,/assets/results/gt/0030/04_pcd-roi-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0030/04_pcd-roi.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Points</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/doughnet/0030/04_geom-topo-480.webp 480w,/assets/results/doughnet/0030/04_geom-topo-800.webp 800w,/assets/results/doughnet/0030/04_geom-topo-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/doughnet/0030/04_geom-topo.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Our Reconstruction</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+  </div>
+  <div class="col-sm mt-3 mt-md-0">
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0030/09_rgb-480.webp 480w,/assets/results/gt/0030/09_rgb-800.webp 800w,/assets/results/gt/0030/09_rgb-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0030/09_rgb.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Color</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0030/09_depth-480.webp 480w,/assets/results/gt/0030/09_depth-800.webp 800w,/assets/results/gt/0030/09_depth-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0030/09_depth.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Depth</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0030/09_pcd-roi-480.webp 480w,/assets/results/gt/0030/09_pcd-roi-800.webp 800w,/assets/results/gt/0030/09_pcd-roi-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0030/09_pcd-roi.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Points</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+
+      <source class="responsive-img-srcset" srcset="/assets/results/doughnet/0030/09_geom-topo-480.webp 480w,/assets/results/doughnet/0030/09_geom-topo-800.webp 800w,/assets/results/doughnet/0030/09_geom-topo-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/doughnet/0030/09_geom-topo.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Our Prediction</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+  </div>
+  <div class="col-sm mt-3 mt-md-0">
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0030/13_rgb-480.webp 480w,/assets/results/gt/0030/13_rgb-800.webp 800w,/assets/results/gt/0030/13_rgb-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0030/13_rgb.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Color</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0030/13_depth-480.webp 480w,/assets/results/gt/0030/13_depth-800.webp 800w,/assets/results/gt/0030/13_depth-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0030/13_depth.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Depth</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0030/13_pcd-roi-480.webp 480w,/assets/results/gt/0030/13_pcd-roi-800.webp 800w,/assets/results/gt/0030/13_pcd-roi-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0030/13_pcd-roi.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Points</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/doughnet/0030/13_geom-topo-480.webp 480w,/assets/results/doughnet/0030/13_geom-topo-800.webp 800w,/assets/results/doughnet/0030/13_geom-topo-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/doughnet/0030/13_geom-topo.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Our Prediction</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+  </div>
+</div>
+<div class="caption">
+  <strong>Merging two components.</strong> In the middle column, DoughNet correctly predicts two separate components; they are only touching and would separate again if perturbed. When squeezed further together, conditioned on the objects (states) and tool used, DoughNet predicts a single merged component. If we, for example, want to minimize geometrical deformation, we may stop manipulation as soon as this topological change occurs.
+</div>
+
+<div class="row mt-3">
+  <div class="col-sm mt-3 mt-md-0">
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0016/06_rgb-480.webp 480w,/assets/results/gt/0016/06_rgb-800.webp 800w,/assets/results/gt/0016/06_rgb-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0016/06_rgb.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Color</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0016/06_depth-480.webp 480w,/assets/results/gt/0016/06_depth-800.webp 800w,/assets/results/gt/0016/06_depth-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0016/06_depth.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Depth</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0016/06_pcd-roi-480.webp 480w,/assets/results/gt/0016/06_pcd-roi-800.webp 800w,/assets/results/gt/0016/06_pcd-roi-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0016/06_pcd-roi.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Points</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+
+      <source class="responsive-img-srcset" srcset="/assets/results/doughnet/0016/05_geom-topo-480.webp 480w,/assets/results/doughnet/0016/05_geom-topo-800.webp 800w,/assets/results/doughnet/0016/05_geom-topo-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/doughnet/0016/05_geom-topo.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Our Reconstruction</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+  </div>
+  <div class="col-sm mt-3 mt-md-0">
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0016/11_rgb-480.webp 480w,/assets/results/gt/0016/11_rgb-800.webp 800w,/assets/results/gt/0016/11_rgb-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0016/11_rgb.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Color</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0016/11_depth-480.webp 480w,/assets/results/gt/0016/11_depth-800.webp 800w,/assets/results/gt/0016/11_depth-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0016/11_depth.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Depth</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0016/11_pcd-roi-480.webp 480w,/assets/results/gt/0016/11_pcd-roi-800.webp 800w,/assets/results/gt/0016/11_pcd-roi-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0016/11_pcd-roi.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Points</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/doughnet/0016/10_geom-topo-480.webp 480w,/assets/results/doughnet/0016/10_geom-topo-800.webp 800w,/assets/results/doughnet/0016/10_geom-topo-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/doughnet/0016/10_geom-topo.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Our Prediction</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+  </div>
+  <div class="col-sm mt-3 mt-md-0">
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0016/15_rgb-480.webp 480w,/assets/results/gt/0016/15_rgb-800.webp 800w,/assets/results/gt/0016/15_rgb-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0016/15_rgb.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Color</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0016/15_depth-480.webp 480w,/assets/results/gt/0016/15_depth-800.webp 800w,/assets/results/gt/0016/15_depth-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0016/15_depth.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Depth</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+    <img-comparison-slider direction="vertical" class="compare-slider-with-animated-handle" value="50">
+      
+
+<figure slot="first" class="compare-before">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/gt/0016/15_pcd-roi-480.webp 480w,/assets/results/gt/0016/15_pcd-roi-800.webp 800w,/assets/results/gt/0016/15_pcd-roi-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/gt/0016/15_pcd-roi.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Observed Points</figcaption>
+  
+</figure>
+
+      
+
+<figure slot="second" class="compare-after">
+  <picture>
+    
+      <source class="responsive-img-srcset" srcset="/assets/results/doughnet/0016/15_geom-topo-480.webp 480w,/assets/results/doughnet/0016/15_geom-topo-800.webp 800w,/assets/results/doughnet/0016/15_geom-topo-1400.webp 1400w," sizes="95vw" type="image/webp"></source>
+    
+    <img src="/assets/results/doughnet/0016/15_geom-topo.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+  </picture>
+
+  
+    <figcaption class="caption">Our Prediction</figcaption>
+  
+</figure>
+
+      <svg slot="handle" class="compare-handle" xmlns="http://www.w3.org/2000/svg" width="100" viewbox="-8 -3 16 6"><path stroke="#fff" d="M -5 -2 L -7 0 L -5 2 M -5 -2 L -5 2 M 5 -2 L 7 0 L 5 2 M 5 -2 L 5 2" stroke-width="0" fill="#fff" vector-effect="non-scaling-stroke"></path></svg>
+    </img-comparison-slider>
+  </div>
+</div>
+<div class="caption">
+  <strong>Self-merging and splitting.</strong> In the right column, DoughNet predicts a split into two components where self-merging reduced the genus of the smaller component (<i>"no hole"</i>). Note that we predict the complete object whereas the observation is severely occluded by the closed tool, entirely missing the larger component.
+</div>
+
+<hr style="margin-bottom: 3rem;">
+
+<h3 id="synthesizing-a-topological-manipulation-dataset">Synthesizing a Topological Manipulation Dataset</h3>
+
+<p>To determine if a topological change has occured, objects need to be perturbed. In the real world, however, this perturbation is destructive and introduces unwanted geometrical deformation. Instead, we use an MPM-based simulation to create a synthetic dataset of topological manipulations by employing two checking operations: (1) pulling previously disconnected components apart (opposite of the tool direction) to test for (self-)merging, and (2) pulling previously connected components apart (orthogonal to the tool direction) to test for splitting.</p>
+
+<div class="row mt-3">
+  <div class="col-sm mt-3 mt-md-0">
+    <figure>
+      <video class="video-fluid rounded z-depth-1" width="auto" height="auto" controls="true" autoplay="true" muted="true" loop="true">
+        <source src="/assets/video/merge.webm" type="video/webm; codecs=vp9,vorbis"></source>
+        <source src="/assets/video/merge.mp4" type="video/mp4"></source>
+      </video>
+    </figure>
+    <div class="caption">
+      <strong>(Self-)Merge check.</strong> At each keyframe, the regions that might merge (green) are pulled apart. If they remain connected at the end of this check, a <i>merge</i> is recorded.
+    </div>
+  </div>
+  <div class="col-sm mt-3 mt-md-0">
+    <figure>
+      <video class="video-fluid rounded z-depth-1" width="auto" height="auto" controls="true" autoplay="true" muted="true" loop="true">
+        <source src="/assets/video/split.webm" type="video/webm; codecs=vp9,vorbis"></source>
+        <source src="/assets/video/split.mp4" type="video/mp4"></source>
+      </video>
+    </figure>
+    <div class="caption">
+      <strong>Split check.</strong> At each keyframe, the regions that might split are pulled apart. If they are not connected in the radius graph at the end of this check, a <i>split</i> is recorded.
+    </div>
+  </div>
+</div>
+
+<hr style="margin-bottom: 3rem;">
+
+<h3 id="bibtex">BibTeX</h3>
+
+<div class="language-bibtex highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">@article</span><span class="p">{</span><span class="nl">bauer2024doughnet</span><span class="p">,</span>
+  <span class="na">title</span><span class="p">=</span><span class="s">{DoughNet: A Visual Predictive Model for Topological Manipulation of Deformable Objects}</span><span class="p">,</span>
+  <span class="na">author</span><span class="p">=</span><span class="s">{Bauer, Dominik and Xu, Zhenjia and Song, Shuran}</span><span class="p">,</span>
+  <span class="na">journal</span><span class="p">=</span><span class="s">{arXiv preprint}</span><span class="p">,</span>
+  <span class="na">year</span><span class="p">=</span><span class="s">{2024}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<hr style="margin-bottom: 3rem;">
+
+<h3 id="contact">Contact</h3>
+<p>If you have any questions, please contact <a href="https://dornik.github.io" rel="external nofollow noopener" target="_blank">Dominik Bauer</a>.</p>
+
+  </article>
+
+  
+
+  
+</div>
+</div>
+            <!-- sidebar, which will move to the top on a small screen -->
+            <div class="col-sm-3">
+              <nav id="toc-sidebar" class="sticky-top">
+              Contents
+              </nav>
+            </div>
+          </div>
+        
+      
+    </div>
+
+    <!-- JavaScripts -->
+    <!-- jQuery -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <!-- Bootsrap & MDB scripts -->
+<script src="/assets/js/bootstrap.bundle.min.js"></script>
+<!-- <script src="/assets/js/mdb.min.js"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/js/mdb.min.js" integrity="sha256-NdbiivsvWt7VYCt6hYNT3h/th9vSTL4EDWeGs5SN3DA=" crossorigin="anonymous"></script>
+
+    
+  <!-- Masonry & imagesLoaded -->
+  <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script>
+  <script defer src="/assets/js/masonry.js" type="text/javascript"></script>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  <!-- Medium Zoom JS -->
+  <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script>
+  <script defer src="/assets/js/zoom.js?85ddb88934d28b74e78031fd54cf8308"></script>
+
+
+  <!-- Sidebar Table of Contents -->
+  <script defer src="/assets/js/bootstrap-toc.min.js?c82ff4de8b0955d6ff14f5b05eed7eb6"></script>
+
+
+<!-- Bootstrap Table -->
+
+
+<!-- Load Common JS -->
+<script src="/assets/js/no_defer.js?5d75c11f89cd96294bf5e6dd1ee1bb30"></script>
+<script defer src="/assets/js/common.js?fcfacfb8c6281f5e68d5a7d348186eb1"></script>
+<script defer src="/assets/js/copy_code.js?12775fdf7f95e901d7119054556e495f" type="text/javascript"></script>
+
+<!-- Jupyter Open External Links New Tab -->
+<script defer src="/assets/js/jupyter_new_tab.js?d9f17b6adc2311cbabd747f4538bb15f"></script>
+
+    
+  <script async src="https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"></script>
+
+
+  <script async src="https://badge.dimensions.ai/badge.js"></script>
+
+
+    
+  <!-- MathJax -->
+  <script type="text/javascript">
+    window.MathJax = {
+      tex: {
+        tags: 'ams',
+      },
+    };
+  </script>
+  <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+
+
+    
+
+
+    
+  <!-- Scrolling Progress Bar -->
+  <script type="text/javascript">
+    /*
+     * This JavaScript code has been adapted from the article
+     * https://css-tricks.com/reading-position-indicator/ authored by Pankaj Parashar,
+     * published on the website https://css-tricks.com on the 7th of May, 2014.
+     * Couple of changes were made to the original code to make it compatible
+     * with the `al-foio` theme.
+     */
+    const progressBar = $('#progress');
+    /*
+     * We set up the bar after all elements are done loading.
+     * In some cases, if the images in the page are larger than the intended
+     * size they'll have on the page, they'll be resized via CSS to accomodate
+     * the desired size. This mistake, however, breaks the computations as the
+     * scroll size is computed as soon as the elements finish loading.
+     * To account for this, a minimal delay was introduced before computing the
+     * values.
+     */
+    window.onload = function () {
+      setTimeout(progressBarSetup, 50);
+    };
+    /*
+     * We set up the bar according to the browser.
+     * If the browser supports the progress element we use that.
+     * Otherwise, we resize the bar thru CSS styling
+     */
+    function progressBarSetup() {
+      if ('max' in document.createElement('progress')) {
+        initializeProgressElement();
+        $(document).on('scroll', function () {
+          progressBar.attr({ value: getCurrentScrollPosition() });
+        });
+        $(window).on('resize', initializeProgressElement);
+      } else {
+        resizeProgressBar();
+        $(document).on('scroll', resizeProgressBar);
+        $(window).on('resize', resizeProgressBar);
+      }
+    }
+    /*
+     * The vertical scroll position is the same as the number of pixels that
+     * are hidden from view above the scrollable area. Thus, a value > 0 is
+     * how much the user has scrolled from the top
+     */
+    function getCurrentScrollPosition() {
+      return $(window).scrollTop();
+    }
+
+    function initializeProgressElement() {
+      let navbarHeight = $('#navbar').outerHeight(true);
+      $('body').css({ 'padding-top': navbarHeight });
+      $('progress-container').css({ 'padding-top': navbarHeight });
+      progressBar.css({ top: navbarHeight });
+      progressBar.attr({
+        max: getDistanceToScroll(),
+        value: getCurrentScrollPosition(),
+      });
+    }
+    /*
+     * The offset between the html document height and the browser viewport
+     * height will be greater than zero if vertical scroll is possible.
+     * This is the distance the user can scroll
+     */
+    function getDistanceToScroll() {
+      return $(document).height() - $(window).height();
+    }
+
+    function resizeProgressBar() {
+      progressBar.css({ width: getWidthPercentage() + '%' });
+    }
+    // The scroll ratio equals the percentage to resize the bar
+    function getWidthPercentage() {
+      return (getCurrentScrollPosition() / getDistanceToScroll()) * 100;
+    }
+  </script>
+
+
+    
+
+    
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/img-comparison-slider@8.0.6/dist/index.min.js"></script>
+  
+  
+
+
+  </body>
+</html>
